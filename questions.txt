@@ -1,0 +1,17 @@
+Questions
+-how to test? (additional testing program)
+-output? where?
+-requirements of library?
+-how graded?
+
+Plans
+-library
+-init function
+
+
+mmap struct to manage space
+free list struct
+	location
+	int free
+	size
+mmap to expand
