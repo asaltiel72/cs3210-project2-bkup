@@ -12,6 +12,12 @@
 		- Create functions to resize program and user space
 */
 
+void init() __attribute__ ((constructor)) {
+
+
+
+}
+
 
 void * gtalloc(size_t bytes){
 	/*
