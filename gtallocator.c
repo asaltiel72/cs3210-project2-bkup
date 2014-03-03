@@ -13,9 +13,29 @@
 */
 
 void init() __attribute__ ((constructor)) {
+	
+	usr_mem = mmap(NULL, INITIAL_BLOCK, PROT_READ | PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS,-1,0);
+	if(usr_mem == MAP_FAILED){
+		//print error and errno, then die?
+	}
+	
+	prg_mem = mmap(NULL, PRG_SPACE, PROT_READ | PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS,-1,0);
+	if(prm_mem == MAP_FAILED){
+		//print error and errno, then die?
+	}
+	
+	&head = prg_mem; // set our structure address to the created private memory segment
+	head->is_available = 1;
+	head->space = INITIAL_BLOCK;
+	head->location_array->location = usr_mem;
+	head->location_array->next = NULL;
+	// change if circular list wanted
+	head->previous = NULL;
+	head->next = NULL;
+}
 
-
-
+void destory() __attribute__ ((destructor)) {
+	// this needed?
 }
 
 

@@ -4,36 +4,33 @@
 
 // Size (in bytes) of initial or new mmapped memory chucks
 #define INITIAL_BLOCK 1048576	// 1024 KB
-#define MINIMUM_BLOCK 1024		// 1 KB
-
-// Defined stats for a tree node
-#define EMPTY 0					// Completely unallocated, no child leaves
-#define PARTIALLY_OCCUPIED 1	// at least part of 1 child leaf allocated 
-#define OCCUPIED 2				// both child leaves occupied
+#define MINIMUM_BLOCK 64		// 64 bytes
+#define PRG_SPACE (INITIAL_BLOCK/MINIMUM_BLOCK)*sizeof(node)
 
 /*
 	TODO: Outline what thread locks are needed
 		- I think we should lock almost everything
 */
 
-typedef struct _node {
+typedef struct _free_addr {
+	uint32_t location;
+	struct free_addr *next;
+} free_addr;
+
+typedef struct {
+	int is_available;
 	uint32_t size;
 	struct free_addr *location_array;
 	struct node *previous;
 	struct node *next;
 } node;
 
-typedef struct _free_addr {
-	uint32_t location;
-	struct free_addr *next;
-} free_addr;
-
 //pointer to head of tree
 struct node *head;
 
 // global variable to store allocated memory
-extern void *user_mem;
-extern void *prg_mem;
+void *user_mem;
+void *prg_mem;
 
 void * gtalloc(size_t bytes);
 
