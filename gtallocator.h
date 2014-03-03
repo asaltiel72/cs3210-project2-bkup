@@ -19,9 +19,13 @@
 struct node {
 	uint32_t state;
 	uint32_t size;
+	uint32_t location;		//store start address of node
 	struct node *left_child;
 	struct node *right_child;
 };
+//pointer to head of tree
+struct node *head;
+
 
 // global variable to store allocated memory
 extern void *user_mem;
