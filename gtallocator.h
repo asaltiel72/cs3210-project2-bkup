@@ -18,10 +18,15 @@
 
 typedef struct _node {
 	uint32_t size;
-	uint32_t *location_array;
+	struct free_addr *location_array;
 	struct node *previous;
 	struct node *next;
 } node;
+
+typedef struct _free_addr {
+	uint32_t location;
+	struct free_addr *next;
+} free_addr;
 
 //pointer to head of tree
 struct node *head;
