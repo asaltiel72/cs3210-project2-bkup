@@ -15,3 +15,27 @@ free list struct
 	int free
 	size
 mmap to expand
+----------------------------------------------------------------------------
+New Plan post meeting
+
+Tree structure
+	head pointer
+	nodes
+		location
+		size
+		state
+		left child
+		right child
+
+when some portion of the tree become occupied (representable by sate at levels)
+mmap more space
+	can allocate beginning at end of first alloc so as to expand
+when some amount is freed, munmap space
+	make sure not to remove original allocation
+	rearrange data into minimal tree before munmap (how?)
+
+LOCKS
+	tree access
+	memory allocation
+	head pointer
+

@@ -1,0 +1,9 @@
+#
+# Georgia Tech CS 3210
+# Spring 2014 
+# Project 2 -- Team Kernel Mustard
+#
+
+This program creates a buddy allocation system callable from userspace with gtalloc
+(as opposed to the built-in call "malloc")
+
