@@ -1,8 +1,8 @@
-#include<stdio.h>
-#include<string.h>
-#include<pthread.h>
-#include<stdlib.h>
-#include<unistd.h> //for brk & sbrk
+#include <stdio.h>
+#include <string.h>
+#include <pthread.h>
+#include <stdlib.h>
+#include <unistd.h> //for brk & sbrk
 
 /*
 	TODO: 
@@ -11,6 +11,7 @@
 		- Initialize user_mem to mmapped block of INITIAL_BLOCK
 		- Create functions to resize program and user space
 */
+
 
 void * gtalloc(size_t bytes){
 	/*
