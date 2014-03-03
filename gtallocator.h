@@ -17,10 +17,8 @@
 */
 
 struct node {
-	uint32_t state;
 	uint32_t size;
-	struct node *left_child;
-	struct node *right_child;
+	struct node *next;
 };
 
 // global variable to store allocated memory
