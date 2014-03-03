@@ -20,7 +20,7 @@ typedef struct _free_addr {
 typedef struct {
 	int is_available;
 	uint32_t size;
-	struct free_addr *location_array;
+	//struct free_addr *location_array;
 	struct node *previous;
 	struct node *next;
 } node;

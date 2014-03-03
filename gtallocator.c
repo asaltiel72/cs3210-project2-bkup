@@ -35,7 +35,7 @@ void init() __attribute__ ((constructor)) {
 }
 
 void destory() __attribute__ ((destructor)) {
-	// this needed?
+	// unmap all the mmapped regions
 }
 
 
@@ -48,7 +48,25 @@ void * gtalloc(size_t bytes){
 			- Return usable pointer to user
 	*/
     if (bytes == 0) {
-	return NULL;
+		return NULL;
+    }
+    
+    struct node *curr = head;
+    int allocated = 0;
+    while(!allocated && curr != NULL){
+    	if(!curr->is_available || curr->size < bytes){
+    		curr = curr->next;
+    	} else {
+    		/*
+    			TODO: figure out how to find best-fit location
+    				- iterate through free-location list?
+    				- handle location splits
+    		*/
+    	}
+    }
+    
+    if(!allocated){
+    	
     }
 }
 
@@ -61,3 +79,5 @@ void gtfree(void * addr){
 			- Merge if buddy is currently free
 	*/
 }
+
+
