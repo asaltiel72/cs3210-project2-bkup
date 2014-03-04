@@ -32,6 +32,7 @@ void init() __attribute__ ((constructor)) {
 	// change if circular list wanted
 	head->previous = NULL;
 	head->next = NULL;
+	head->buddy= NULL;
 }
 
 void destory() __attribute__ ((destructor)) {
@@ -54,23 +55,52 @@ void * gtalloc(size_t bytes){
     struct node *curr = head;
     int allocated = 0;
     while(!allocated && curr != NULL){
-    	if(!curr->is_available || curr->size < bytes){
-    		curr = curr->next;
-    	} else {
-    		/*
+	if(curr->next != NULL){
+		if(curr->next->space > bytes){
+			if(curr->next->is_available){
+				curr=curr->next;
+			}
+		}
+		else{
+			curr = curr->buddy;
+		}
+	    	if(!curr->is_available || curr->size < bytes){
+    			curr = curr->next;
+		}    	
+	} 
+	else {
+    		
+
+		/*
     			TODO: figure out how to find best-fit location
     				- iterate through free-location list?
     				- handle location splits
     		*/
+		int half = curr->space/2;
+		curr->space = half;
+		
+		/*
+		Allocate new node named newGuy
+		*/	
+
+		curr->buddy = newGuy;
+		curr->next = newGuy;
+		newGuy->prev = curr;
+		newGuy->buddy = curr;
+		newGuy->space = half;
+		newGuy->location = curr->location + half;
+			
     	}
     }
     
     if(!allocated){
-    	
+    	/*
+		mmap more space
+	*/
     }
 }
 
-void gtfree(void * addr){
+void gtfree(void *addr){
 	/*
 		TODO:
 			- Mark unallocated block as free

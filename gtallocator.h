@@ -4,7 +4,7 @@
 
 // Size (in bytes) of initial or new mmapped memory chucks
 #define INITIAL_BLOCK 1048576	// 1024 KB
-#define MINIMUM_BLOCK 64		// 64 bytes
+#define MINIMUM_BLOCK 64	// 64 bytes
 #define PRG_SPACE (INITIAL_BLOCK/MINIMUM_BLOCK)*sizeof(node)
 
 /*
@@ -18,14 +18,15 @@ typedef struct _free_addr {
 } free_addr;
 
 typedef struct {
+	//struct free_addr *location_array;
 	int is_available;
 	uint32_t size;
-	//struct free_addr *location_array;
+	struct node *buddy;
 	struct node *previous;
 	struct node *next;
 } node;
 
-//pointer to head of tree
+//pointer to head of list
 struct node *head;
 
 // global variable to store allocated memory
