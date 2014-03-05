@@ -18,14 +18,22 @@ void init() __attribute__ ((constructor)) {
 	if(usr_mem == MAP_FAILED){
 		//print error and errno, then die?
 	}
+	calc_prg_mem_size();
 	
+
+	//prg_mem layout is as follows
+	//a map struct that points to the next map (for expanding)
+	//an array of nodes for the allowed block sizes
+	//an array of free addresses
+	//may need to add an array for freeing
+
 	prg_mem = mmap(NULL, PRG_SPACE, PROT_READ | PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS,-1,0);
 	if(prm_mem == MAP_FAILED){
 		//print error and errno, then die?
 	}
 	
 	&head = prg_mem; // set our structure address to the created private memory segment
-	head->is_available = 1;
+	head->state = 1;
 	head->space = INITIAL_BLOCK;
 	head->location_array->location = usr_mem;
 	head->location_array->next = NULL;
@@ -33,6 +41,16 @@ void init() __attribute__ ((constructor)) {
 	head->previous = NULL;
 	head->next = NULL;
 	head->buddy= NULL;
+	
+	uint32_t block_size = INITIAL_BLOCK;
+	void *curr_addr = prg_mem;
+	node *curr_node = head;
+	for(int i = 1; i < 14; i++) {
+		curr_node->next = (node *)(curr_addr + (sizeof(node)* i));
+		curr_node = curr_node->next;
+		block_size=
+		curr_node->size = 
+	}
 }
 
 void destory() __attribute__ ((destructor)) {
@@ -57,14 +75,14 @@ void * gtalloc(size_t bytes){
     while(!allocated && curr != NULL){
 	if(curr->next != NULL){
 		if(curr->next->space > bytes){
-			if(curr->next->is_available){
+			if(curr->next->state){
 				curr=curr->next;
 			}
 		}
 		else{
 			curr = curr->buddy;
 		}
-	    	if(!curr->is_available || curr->size < bytes){
+	    	if(!curr->state || curr->size < bytes){
     			curr = curr->next;
 		}    	
 	} 
@@ -110,4 +128,6 @@ void gtfree(void *addr){
 	*/
 }
 
+void calulate_prg_mem_size();
 
+void split();
