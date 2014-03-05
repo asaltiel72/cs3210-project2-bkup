@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
+#include <math.h>
 #include <stdlib.h>
 #include <unistd.h> //for brk & sbrk
 
@@ -18,7 +19,8 @@ void init() __attribute__ ((constructor)) {
 	if(usr_mem == MAP_FAILED){
 		//print error and errno, then die?
 	}
-	calc_prg_mem_size();
+	size_t prg_space;
+	prg_space = calc_prg_mem_size(MINIMUM_BLOCK, INITIAL_BLOCK);
 	
 
 	//prg_mem layout is as follows
@@ -27,7 +29,7 @@ void init() __attribute__ ((constructor)) {
 	//an array of free addresses
 	//may need to add an array for freeing
 
-	prg_mem = mmap(NULL, PRG_SPACE, PROT_READ | PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS,-1,0);
+	prg_mem = mmap(NULL, prg_space, PROT_READ | PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS,-1,0);
 	if(prm_mem == MAP_FAILED){
 		//print error and errno, then die?
 	}
@@ -128,6 +130,14 @@ void gtfree(void *addr){
 	*/
 }
 
-void calulate_prg_mem_size();
+size_t calulate_prg_mem_size(int min_block, total_block) {
+	int total_size;	
+	int num_sizes = (log2(total_block) - log2(min_block));
+	total_size = sizeof(map);
+	total_size = total_size + (sizeof(node) * num_sizes);
+        total_size = total_size + (sizeof(free_addr) * 
+				  FREE_ARRAY((num_sizes + 1), -1));
+	return (size_t) total_size;
+}
 
 void split();
