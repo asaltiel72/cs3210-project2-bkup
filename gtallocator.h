@@ -25,20 +25,20 @@
 		- I think we should lock almost everything
 */
 
-typedef struct _free_addr {
+typedef struct _block {
 	int free = TAKEN;
 	uint32_t location;
-	_free_addr *buddy;
-} free_addr;
+	_block *buddy;
+} block;
 
 typedef struct {
-	struct free_addr *location_array;
+	struct block* location_array;
 	int state = UNINITIALIZED;
 	uint32_t size;
-} node;
+} block_list;
 
 typedef struct _map {
-	struct node *head;
+	struct block_list *head;
 	struct free_addr *free_list;
 	struct _map *next_map;
 } map;
