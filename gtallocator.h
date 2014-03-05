@@ -5,8 +5,8 @@
 #include <math.h>
 
 // Size (in bytes) of initial or new mmapped memory chucks
-#define INITIAL_BLOCK 1048576	// 1024 KB
-#define MINIMUM_BLOCK 64	// 64 bytes
+#define INITIAL_BLOCK 16384		// 16 KB
+#define MINIMUM_BLOCK 16		// 16 bytes
 #define PRG_SPACE (INITIAL_BLOCK/MINIMUM_BLOCK)*sizeof(node)
 
 //state values
@@ -28,7 +28,7 @@
 typedef struct _free_addr {
 	int free = TAKEN;
 	uint32_t location;
-	free_addr *buddy;
+	_free_addr *buddy;
 } free_addr;
 
 typedef struct {
@@ -37,10 +37,10 @@ typedef struct {
 	uint32_t size;
 } node;
 
-typedef struct {
+typedef struct _map {
 	struct node *head;
 	struct free_addr *free_list;
-	struct map *next_map;
+	struct _map *next_map;
 } map;
 
 
