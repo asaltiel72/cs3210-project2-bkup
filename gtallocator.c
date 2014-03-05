@@ -25,8 +25,8 @@ void init() __attribute__ ((constructor)) {
 
 	//prg_mem layout is as follows
 	//a map struct that points to the next map (for expanding)
-	//an array of nodes for the allowed block sizes
-	//an array of free addresses
+	//an array of block_lists for the allowed block sizes
+	//an array of blocks
 	//may need to add an array for freeing
 
 	prg_mem = mmap(NULL, prg_space, PROT_READ | PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS,-1,0);
@@ -46,7 +46,7 @@ void init() __attribute__ ((constructor)) {
 	
 	uint32_t block_size = INITIAL_BLOCK;
 	void *curr_addr = prg_mem;
-	node *curr_node = head;
+	block_list *curr_node = head;
 	for(int i = 1; i < 14; i++) {
 		curr_node->next = (node *)(curr_addr + (sizeof(node)* i));
 		curr_node = curr_node->next;
@@ -72,7 +72,7 @@ void * gtalloc(size_t bytes){
 		return NULL;
     }
     
-    struct node *curr = head;
+    struct block_list *curr = head;
     int allocated = 0;
     while(!allocated && curr != NULL){
 	if(curr->next != NULL){
