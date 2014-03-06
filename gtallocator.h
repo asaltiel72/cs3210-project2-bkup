@@ -9,11 +9,6 @@
 #define MINIMUM_BLOCK 16		// 16 bytes
 #define PRG_SPACE (INITIAL_BLOCK/MINIMUM_BLOCK)*sizeof(node)
 
-//state values
-#define UNINITIALIZED 0
-#define INITIALIZED 1
-#define NONE_FREE 2
-
 //free values
 #define FREE 1
 #define TAKEN 0

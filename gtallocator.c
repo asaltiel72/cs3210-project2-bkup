@@ -99,6 +99,17 @@ void gtfree(void *addr){
 	*/
 }
 
+void * find_free(block *array){
+	int i = 0;
+	while(i < block->array_size){
+		if(block[i].free){
+			return ((void *) block[i].location);
+		}
+		i++;
+	}
+	return NULL;
+}
+
 size_t calc_prg_mem_size(int min_block, int total_block) {
 	int total_size;	
 	int num_sizes = (log2(total_block) - log2(min_block));
