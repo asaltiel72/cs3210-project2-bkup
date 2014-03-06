@@ -155,4 +155,8 @@ size_t calc_prg_mem_size(int min_block, int total_block) {
 	return (size_t) total_size;
 }
 
+size_t get_requested_order(size_t bytes){
+	return ((size_t) (ceil(log2((double) t))));
+}
+
 void split();
