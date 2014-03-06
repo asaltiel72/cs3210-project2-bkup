@@ -87,52 +87,6 @@ void * gtalloc(size_t bytes){
 		return NULL;
     }
     
-    struct block_list *curr = head;
-    int allocated = 0;
-    while(!allocated && curr != NULL){
-	if(curr->next != NULL){
-		if(curr->next->space > bytes){
-			if(curr->next->state){
-				curr=curr->next;
-			}
-		}
-		else{
-			curr = curr->buddy;
-		}
-	    	if(!curr->state || curr->size < bytes){
-    			curr = curr->next;
-		}    	
-	} 
-	else {
-    		
-
-		/*
-    			TODO: figure out how to find best-fit location
-    				- iterate through free-location list?
-    				- handle location splits
-    		*/
-		int half = curr->space/2;
-		curr->space = half;
-		
-		/*
-		Allocate new node named newGuy
-		*/	
-
-		curr->buddy = newGuy;
-		curr->next = newGuy;
-		newGuy->prev = curr;
-		newGuy->buddy = curr;
-		newGuy->space = half;
-		newGuy->location = curr->location + half;
-			
-    	}
-    }
-    
-    if(!allocated){
-    	/*
-		mmap more space
-	*/
-    }
 }
 
 void gtfree(void *addr){
