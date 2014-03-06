@@ -30,23 +30,14 @@ __attribute__ ((constructor)) void init() {
 
 	prg_mem = mmap(NULL, prg_space, PROT_READ | PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS,-1,0);
 	if(prg_mem == MAP_FAILED){
-		//print error and errno, then die?
+		//print error and errno, then die
 	}
+	
 	num_sizes = (log2(INITIAL_BLOCK) - log2(MINIMUM_BLOCK));
 	first_map = (map *) prg_mem;
 	first_map->head = prg_mem + sizeof(map);
 	first_map->free_list = prg_mem + sizeof(map) + 
 					(sizeof(block_list) * num_sizes);
-	
-	//&head = prg_mem; // set our structure address to the created private memory segment
-	//head->state = 1;
-	//head->space = INITIAL_BLOCK;
-	//head->location_array->location = usr_mem;
-	//head->location_array->next = NULL;
-	// change if circular list wanted
-	//head->previous = NULL;
-	//head->next = NULL;
-	//head->buddy= NULL;
 	
 	uint32_t block_size = INITIAL_BLOCK;
 	curr_list = first_map->head;
@@ -93,7 +84,7 @@ void * gtalloc(size_t bytes){
     int index = find_free(order);
     
     if(index == -1){
-    	return split(index);
+    	return split(order);
     } else {
     	// bookkeeping
 		return curr_list[order].location_array[index].location;
@@ -105,8 +96,9 @@ void * gtalloc(size_t bytes){
 void gtfree(void *addr){
 	/*
 		TODO:
+			- Reverse lookup block by address
 			- Mark unallocated block as free
-			(recursively)
+				(recursively)
 			- Check buddy partitions
 			- Merge if buddy is currently free
 	*/
