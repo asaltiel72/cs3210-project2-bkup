@@ -6,6 +6,7 @@ int find_free(size_t order);
 void add_alloc(block * just_allocated);
 block * remove_alloc(rl_node *node);
 void * split(size_t order);
+void merge(block * free_node);
 
 /*
 	TODO: 
@@ -182,4 +183,8 @@ void * split(size_t order) {
 	} while (i > 0);
 	add_alloc(curr_block);
 	return temp_loc;
-}	
+}
+
+void merge(block * free_node) {
+
+}
