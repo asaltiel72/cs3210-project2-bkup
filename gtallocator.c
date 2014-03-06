@@ -1,9 +1,7 @@
-#include <stdio.h>
-#include <string.h>
-#include <pthread.h>
-#include <math.h>
-#include <stdlib.h>
-#include <unistd.h> //for brk & sbrk
+#include "gtallocator.h"
+
+size_t calc_prg_mem_size(int min_block, int total_block);
+size_t get_requested_order(size_t bytes);
 
 /*
 	TODO: 
@@ -13,10 +11,10 @@
 		- Create functions to resize program and user space
 */
 
-void init() __attribute__ ((constructor)) {
+__attribute__ ((constructor)) void init() {
 	
-	usr_mem = mmap(NULL, INITIAL_BLOCK, PROT_READ | PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS,-1,0);
-	if(usr_mem == MAP_FAILED){
+	user_mem = mmap(NULL, INITIAL_BLOCK, PROT_READ | PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS,-1,0);
+	if(user_mem == MAP_FAILED){
 		//print error and errno, then die?
 	}
 	size_t prg_space;
@@ -30,10 +28,10 @@ void init() __attribute__ ((constructor)) {
 	//may need to add an array for freeing
 
 	prg_mem = mmap(NULL, prg_space, PROT_READ | PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS,-1,0);
-	if(prm_mem == MAP_FAILED){
+	if(prg_mem == MAP_FAILED){
 		//print error and errno, then die?
 	}
-	num_sizes = (log2(total_block) - log2(min_block));
+	num_sizes = (log2(INITIAL_BLOCK) - log2(MINIMUM_BLOCK));
 	first_map = (map *) prg_mem;
 	first_map->head = prg_mem + sizeof(map);
 	first_map->free_list = prg_mem + sizeof(map) + 
@@ -51,7 +49,7 @@ void init() __attribute__ ((constructor)) {
 	
 	uint32_t block_size = INITIAL_BLOCK;
 	curr_list = first_map->head;
-	block *curr_block = map->free_list;
+	block *curr_block = first_map->free_list;
 	int offset = 1;
 
 	//initalize first block
@@ -60,17 +58,17 @@ void init() __attribute__ ((constructor)) {
 	curr_list->array_size = offset;
 	
 	//initialize the rest
-	for(int i = 1; i < num_sizes; i++) {
+	int i = 0;
+	for(i = 1; i < num_sizes; i++) {
 		block_size = block_size/2;
-		curr_list[i]->size = block_size;
-		curr_list[i]->location_array = curr_list[i-1]->location_array
-					     + offest;
+		curr_list[i].size = block_size;
+		curr_list[i].location_array = curr_list[i-1].location_array + offset;
 		offset = offset * 2;
-		curr_list[i]->array_size = offset;
+		curr_list[i].array_size = offset;
 	}
 }
 
-void destory() __attribute__ ((destructor)) {
+__attribute__ ((destructor)) void destory() {
 	// unmap all the mmapped regions
 }
 
@@ -86,7 +84,7 @@ void * gtalloc(size_t bytes){
     if (bytes == 0) {
 		return NULL;
     }
-    
+    return NULL;
 }
 
 void gtfree(void *addr){
@@ -99,13 +97,15 @@ void gtfree(void *addr){
 	*/
 }
 
-void * find_free(block *array){
+block * find_free(size_t order){
 	int i = 0;
-	while(i < block->array_size){
-		if(block[i].free){
-			return ((void *) block[i].location);
+	block *curr = curr_list[order].location_array;
+	while(i < curr_list[order].array_size){
+		if(curr[i].free){
+			return &curr[i];
+		} else {
+			i++;
 		}
-		i++;
 	}
 	return NULL;
 }
@@ -114,14 +114,13 @@ size_t calc_prg_mem_size(int min_block, int total_block) {
 	int total_size;	
 	int num_sizes = (log2(total_block) - log2(min_block));
 	total_size = sizeof(map);
-	total_size = total_size + (sizeof(node) * num_sizes);
-        total_size = total_size + (sizeof(free_addr) * 
-				  FREE_ARRAY((num_sizes + 1), -1));
+	total_size = total_size + (sizeof(block_list) * num_sizes);
+        total_size = total_size + (sizeof(block) * FREE_ARRAY((num_sizes + 1), -1));
 	return (size_t) total_size;
 }
 
 size_t get_requested_order(size_t bytes){
-	return ((size_t) (ceil(log2((double) t))));
+	return ((size_t) (ceil(log2((double) bytes))));
 }
 
 void split();

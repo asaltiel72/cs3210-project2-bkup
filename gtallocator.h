@@ -2,7 +2,15 @@
 #define _GTALLOCATOR_H_
 #endif
 
+#include <stdio.h>
+#include <string.h>
+#include <pthread.h>
 #include <math.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <math.h>
+#include <stdint.h>
+#include <sys/mman.h>
 
 // Size (in bytes) of initial or new mmapped memory chucks
 #define INITIAL_BLOCK 16384		// 16 KB
@@ -23,7 +31,7 @@
 typedef struct _block {
 	int free;
 	uint32_t location;
-	_block *buddy;
+	struct _block *buddy;
 } block;
 
 typedef struct {
@@ -33,8 +41,8 @@ typedef struct {
 } block_list;
 
 typedef struct _map {
-	struct block_list *head;
-	struct block *free_list;
+	block_list *head;
+	block *free_list;
 	struct _map *next_map;
 } map;
 
@@ -50,3 +58,4 @@ int num_sizes;
 void * gtalloc(size_t bytes);
 
 void gtfree(void * addr);
+
