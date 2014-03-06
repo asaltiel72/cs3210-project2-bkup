@@ -21,7 +21,7 @@
 #define FREE 1
 #define TAKEN 0
 //indexed at 0
-#define FREE_ARRAY(i, j) (((-2 + pow(2, (i+1)))/2) + j)
+#define FREE_ARRAY(i, j) (uint32_t) (((-2 + pow(2, (i+1)))/2) + j)
 
 /*
 	TODO: Outline what thread locks are needed
@@ -30,12 +30,12 @@
 
 typedef struct _block {
 	int free;
-	uint32_t location;
+	void *location;
 	struct _block *buddy;
 } block;
 
 typedef struct {
-	uint32_t size;
+	size_t size;
 	block *location_array;
 	int array_size;
 	int num_elements;
@@ -43,7 +43,7 @@ typedef struct {
 
 //Reverse lookup node
 typedef struct _rl_node {
-	uint32_t location;
+	void *location;
 	block *alloced_block;
 	struct _rl_node *next;
 } rl_node;
@@ -54,8 +54,8 @@ typedef struct _map {
 	block *free_list;
 	rl_node *alloc_head;
 	rl_node *alloc_tail;
-	uint32_t first_node_addr;
-	uint32_t last_node_addr;
+	void *first_node_addr;
+	void *last_node_addr;
 	struct _map *next_map;
 } map;
 

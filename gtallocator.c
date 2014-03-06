@@ -3,6 +3,8 @@
 size_t calc_prg_mem_size(int min_block, int total_block);
 size_t get_requested_order(size_t bytes);
 int find_free(size_t order);
+void add_alloc(block * just_allocated);
+block * remove_alloc(rl_node *node);
 void * split(size_t order);
 
 /*
@@ -42,8 +44,8 @@ __attribute__ ((constructor)) void init() {
 	first_map->alloc_head = prg_mem + sizeof(map) + 
 					 (sizeof(block_list) * num_sizes) +
 					 (sizeof(block) * FREE_ARRAY(num_sizes,0));
-	first_map->alloc_tail = alloc_head;
-	first_map->last_node_addr = prg_space - sizeof(block);
+	first_map->alloc_tail = first_map->alloc_head;
+	first_map->last_node_addr = (void *) prg_space - sizeof(block);
 
 	uint32_t block_size = INITIAL_BLOCK;
 	curr_list = first_map->head;
@@ -54,7 +56,7 @@ __attribute__ ((constructor)) void init() {
 	curr_list->size = block_size;
 	curr_list->location_array = curr_block;
 	curr_list->array_size = offset;
-	curr_list->location_array->location = (uint32_t) usr_mem;
+	curr_list->location_array->location = usr_mem;
 	curr_list->location_array->free = FREE;
 	curr_list->location_array->buddy = NULL;
 	
@@ -139,29 +141,34 @@ size_t get_requested_order(size_t bytes){
 }
 
 void add_alloc(block *just_alloced) {
-		alloc_tail->alloced_block = just_alloced;
-		alloc_tail->location = just_alloced->location;
+	rl_node *tail = first_map->alloc_tail;
+	tail->alloced_block = just_alloced;
+	tail->location = just_alloced->location;
 
-	if (alloc_tail == last_node_addr)	
-		alloc_tail->next = first_node_addr;
+	if (first_map->alloc_tail == first_map->last_node_addr) {	
+		tail->next = (rl_node *) first_map->first_node_addr;
 	} else {
-		alloc_tail->next = alloc_tail + sizeof(rl_node);
+		tail->next = tail + sizeof(rl_node);
 	}
-		alloc_tail = alloc_tail->next;
+	first_map->alloc_tail = first_map->alloc_tail->next;
 }
 
+block * remove_alloc(rl_node *node) {
+	return NULL;
+}
+
+
 void * split(size_t order) {
-	int i = 1;
+	int i = 0;
 	int ret;
 	do {
-		ret = find_free(order - i);
 		i++;
+		ret = find_free(order - i);
 	} while (ret == -1);
-	block *curr_block;
-	uint32_t temp_loc = curr_block->location;
+	block *curr_block = &(curr_list[order - i].location_array[ret]);
+	void *temp_loc = curr_block->location;
+	curr_block->free = TAKEN;
 	do {
-		curr_block = &(curr_list[index - i].location_array[ret]);
-		curr_block->free = TAKEN;
 		i--;
 		ret = ret * 2;
 		curr_block = &(curr_list[order - i].location_array[ret]);
@@ -170,9 +177,9 @@ void * split(size_t order) {
 		curr_block->buddy = &(curr_block[1]);
 		curr_block = &(curr_block[1]);
 		curr_block->free = FREE;
-		curr_block->location = temp_loc	+ curr_list[index - i].size;
+		curr_block->location = temp_loc	+ curr_list[order - i].size;
 	       	curr_block->buddy = &(curr_block[-1]);
-	} while (i > 1);
+	} while (i > 0);
 	add_alloc(curr_block);
 	return temp_loc;
 }	
