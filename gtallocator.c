@@ -2,6 +2,7 @@
 
 size_t calc_prg_mem_size(int min_block, int total_block);
 size_t get_requested_order(size_t bytes);
+int find_free(size_t order);
 
 /*
 	TODO: 
@@ -97,17 +98,15 @@ void gtfree(void *addr){
 	*/
 }
 
-block * find_free(size_t order){
+int find_free(size_t order){
 	int i = 0;
 	block *curr = curr_list[order].location_array;
-	while(i < curr_list[order].array_size){
+	for(i = 0; i < curr_list[order].array_size; i++){
 		if(curr[i].free){
-			return &curr[i];
-		} else {
-			i++;
+			return i;
 		}
 	}
-	return NULL;
+	return -1;
 }
 
 size_t calc_prg_mem_size(int min_block, int total_block) {
