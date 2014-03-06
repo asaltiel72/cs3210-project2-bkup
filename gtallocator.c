@@ -66,6 +66,7 @@ __attribute__ ((constructor)) void init() {
 	for(i = 1; i < num_sizes; i++) {
 		block_size = block_size/2;
 		curr_list[i].size = block_size;
+		curr_list[i].num_elements = 0;
 		curr_list[i].location_array = curr_list[i-1].location_array + offset;
 		offset = offset * 2;
 		curr_list[i].array_size = offset;
@@ -88,6 +89,16 @@ void * gtalloc(size_t bytes){
     if (bytes == 0) {
 		return NULL;
     }
+    size_t order = get_requested_order(bytes);
+    int index = find_free(order);
+    
+    if(index == -1){
+    	return split(index);
+    } else {
+    	// bookkeeping
+		return curr_list[order].location_array[index].location;
+    }
+    
     return NULL;
 }
 
@@ -103,11 +114,14 @@ void gtfree(void *addr){
 
 int find_free(size_t order){
 	int i = 0;
-	block *curr = curr_list[order].location_array;
-	for(i = 0; i < curr_list[order].array_size; i++){
-		if(curr[i].free){
-			return i;
+	if(curr_list[order].num_elements > 0){
+		block *curr = curr_list[order].location_array;
+		for(i = 0; i < curr_list[order].array_size; i++){
+			if(curr[i].free){
+				return i;
+			}
 		}
+		return -1;
 	}
 	return -1;
 }

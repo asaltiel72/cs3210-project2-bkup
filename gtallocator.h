@@ -37,7 +37,8 @@ typedef struct _block {
 typedef struct {
 	uint32_t size;
 	block *location_array;
-	int array_size;	
+	int array_size;
+	int num_elements;
 } block_list;
 
 typedef struct _map {
