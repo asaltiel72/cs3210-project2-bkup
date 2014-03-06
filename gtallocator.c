@@ -3,7 +3,7 @@
 size_t calc_prg_mem_size(int min_block, int total_block);
 size_t get_requested_order(size_t bytes);
 int find_free(size_t order);
-void split(size_t index);
+void * split(size_t order);
 
 /*
 	TODO: 
@@ -43,6 +43,7 @@ __attribute__ ((constructor)) void init() {
 					 (sizeof(block_list) * num_sizes) +
 					 (sizeof(block) * FREE_ARRAY(num_sizes,0));
 	first_map->alloc_tail = alloc_head;
+	first_map->last_node_addr = prg_space - sizeof(block);
 
 	uint32_t block_size = INITIAL_BLOCK;
 	curr_list = first_map->head;
@@ -91,7 +92,7 @@ void * gtalloc(size_t bytes){
     if(index == -1){
     	return split(order);
     } else {
-    	// bookkeeping
+    		add_alloc(&curr_list[order].location_array[index]);
 		return ((void *) curr_list[order].location_array[index].location);
     }
     
@@ -138,7 +139,15 @@ size_t get_requested_order(size_t bytes){
 }
 
 void add_alloc(block *just_alloced) {
-	if (
+		alloc_tail->alloced_block = just_alloced;
+		alloc_tail->location = just_alloced->location;
+
+	if (alloc_tail == last_node_addr)	
+		alloc_tail->next = first_node_addr;
+	} else {
+		alloc_tail->next = alloc_tail + sizeof(rl_node);
+	}
+		alloc_tail = alloc_tail->next;
 }
 
 void * split(size_t order) {

@@ -54,6 +54,8 @@ typedef struct _map {
 	block *free_list;
 	rl_node *alloc_head;
 	rl_node *alloc_tail;
+	uint32_t first_node_addr;
+	uint32_t last_node_addr;
 	struct _map *next_map;
 } map;
 
@@ -64,7 +66,6 @@ void *prg_mem;
 map *first_map;
 block_list *curr_list;
 int num_sizes;
-int prg_mem_size;
 
 
 void * gtalloc(size_t bytes);
