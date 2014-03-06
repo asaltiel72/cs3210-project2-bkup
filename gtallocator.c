@@ -33,25 +33,40 @@ void init() __attribute__ ((constructor)) {
 	if(prm_mem == MAP_FAILED){
 		//print error and errno, then die?
 	}
+	num_sizes = (log2(total_block) - log2(min_block));
+	first_map = (map *) prg_mem;
+	first_map->head = prg_mem + sizeof(map);
+	first_map->free_list = prg_mem + sizeof(map) + 
+					(sizeof(block_list) * num_sizes);
 	
-	&head = prg_mem; // set our structure address to the created private memory segment
-	head->state = 1;
-	head->space = INITIAL_BLOCK;
-	head->location_array->location = usr_mem;
-	head->location_array->next = NULL;
+	//&head = prg_mem; // set our structure address to the created private memory segment
+	//head->state = 1;
+	//head->space = INITIAL_BLOCK;
+	//head->location_array->location = usr_mem;
+	//head->location_array->next = NULL;
 	// change if circular list wanted
-	head->previous = NULL;
-	head->next = NULL;
-	head->buddy= NULL;
+	//head->previous = NULL;
+	//head->next = NULL;
+	//head->buddy= NULL;
 	
 	uint32_t block_size = INITIAL_BLOCK;
-	void *curr_addr = prg_mem;
-	block_list *curr_node = head;
-	for(int i = 1; i < 14; i++) {
-		curr_node->next = (node *)(curr_addr + (sizeof(node)* i));
-		curr_node = curr_node->next;
-		block_size=
-		curr_node->size = 
+	curr_list = first_map->head;
+	block *curr_block = map->free_list;
+	int offset = 1;
+
+	//initalize first block
+	curr_list->size = block_size;
+	curr_list->location_array = curr_block;
+	curr_list->array_size = offset;
+	
+	//initialize the rest
+	for(int i = 1; i < num_sizes; i++) {
+		block_size = block_size/2;
+		curr_list[i]->size = block_size;
+		curr_list[i]->location_array = curr_list[i-1]->location_array
+					     + offest;
+		offset = offset * 2;
+		curr_list[i]->array_size = offset;
 	}
 }
 
@@ -130,7 +145,7 @@ void gtfree(void *addr){
 	*/
 }
 
-size_t calulate_prg_mem_size(int min_block, total_block) {
+size_t calc_prg_mem_size(int min_block, int total_block) {
 	int total_size;	
 	int num_sizes = (log2(total_block) - log2(min_block));
 	total_size = sizeof(map);

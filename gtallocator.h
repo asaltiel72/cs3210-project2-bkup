@@ -12,7 +12,7 @@
 //state values
 #define UNINITIALIZED 0
 #define INITIALIZED 1
-#define FULL 2
+#define NONE_FREE 2
 
 //free values
 #define FREE 1
@@ -26,20 +26,20 @@
 */
 
 typedef struct _block {
-	int free = TAKEN;
+	int free;
 	uint32_t location;
 	_block *buddy;
 } block;
 
 typedef struct {
-	struct block* location_array;
-	int state = UNINITIALIZED;
 	uint32_t size;
+	block *location_array;
+	int array_size;	
 } block_list;
 
 typedef struct _map {
 	struct block_list *head;
-	struct free_addr *free_list;
+	struct block *free_list;
 	struct _map *next_map;
 } map;
 
@@ -47,6 +47,10 @@ typedef struct _map {
 // global variable to store allocated memory
 void *user_mem;
 void *prg_mem;
+map *first_map;
+block_list *curr_list;
+int num_sizes;
+
 
 void * gtalloc(size_t bytes);
 
