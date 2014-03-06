@@ -30,23 +30,14 @@ __attribute__ ((constructor)) void init() {
 
 	prg_mem = mmap(NULL, prg_space, PROT_READ | PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS,-1,0);
 	if(prg_mem == MAP_FAILED){
-		//print error and errno, then die?
+		//print error and errno, then die
 	}
+	
 	num_sizes = (log2(INITIAL_BLOCK) - log2(MINIMUM_BLOCK));
 	first_map = (map *) prg_mem;
 	first_map->head = prg_mem + sizeof(map);
 	first_map->free_list = prg_mem + sizeof(map) + 
 					(sizeof(block_list) * num_sizes);
-	
-	//&head = prg_mem; // set our structure address to the created private memory segment
-	//head->state = 1;
-	//head->space = INITIAL_BLOCK;
-	//head->location_array->location = usr_mem;
-	//head->location_array->next = NULL;
-	// change if circular list wanted
-	//head->previous = NULL;
-	//head->next = NULL;
-	//head->buddy= NULL;
 	
 	uint32_t block_size = INITIAL_BLOCK;
 	curr_list = first_map->head;
@@ -66,6 +57,7 @@ __attribute__ ((constructor)) void init() {
 	for(i = 1; i < num_sizes; i++) {
 		block_size = block_size/2;
 		curr_list[i].size = block_size;
+		curr_list[i].num_elements = 0;
 		curr_list[i].location_array = curr_list[i-1].location_array + offset;
 		offset = offset * 2;
 		curr_list[i].array_size = offset;
@@ -88,14 +80,25 @@ void * gtalloc(size_t bytes){
     if (bytes == 0) {
 		return NULL;
     }
+    size_t order = get_requested_order(bytes);
+    int index = find_free(order);
+    
+    if(index == -1){
+    	return split(order);
+    } else {
+    	// bookkeeping
+		return curr_list[order].location_array[index].location;
+    }
+    
     return NULL;
 }
 
 void gtfree(void *addr){
 	/*
 		TODO:
+			- Reverse lookup block by address
 			- Mark unallocated block as free
-			(recursively)
+				(recursively)
 			- Check buddy partitions
 			- Merge if buddy is currently free
 	*/
@@ -103,11 +106,14 @@ void gtfree(void *addr){
 
 int find_free(size_t order){
 	int i = 0;
-	block *curr = curr_list[order].location_array;
-	for(i = 0; i < curr_list[order].array_size; i++){
-		if(curr[i].free){
-			return i;
+	if(curr_list[order].num_elements > 0){
+		block *curr = curr_list[order].location_array;
+		for(i = 0; i < curr_list[order].array_size; i++){
+			if(curr[i].free){
+				return i;
+			}
 		}
+		return -1;
 	}
 	return -1;
 }
