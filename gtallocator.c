@@ -33,12 +33,16 @@ __attribute__ ((constructor)) void init() {
 		//print error and errno, then die
 	}
 	
-	num_sizes = (log2(INITIAL_BLOCK) - log2(MINIMUM_BLOCK));
+	num_sizes = ((log2(INITIAL_BLOCK) - log2(MINIMUM_BLOCK))+1);
 	first_map = (map *) prg_mem;
 	first_map->head = prg_mem + sizeof(map);
-	first_map->free_list = prg_mem + sizeof(map) + 
+	first_map->free_list = prg_mem + sizeof(map) +
 					(sizeof(block_list) * num_sizes);
-	
+	first_map->alloc_head = prg_mem + sizeof(map) + 
+					 (sizeof(block_list) * num_sizes) +
+					 (sizeof(block) * FREE_ARRAY(num_sizes,0));
+	first_map->alloc_tail = alloc_head;
+
 	uint32_t block_size = INITIAL_BLOCK;
 	curr_list = first_map->head;
 	block *curr_block = first_map->free_list;
@@ -123,7 +127,8 @@ size_t calc_prg_mem_size(int min_block, int total_block) {
 	int num_sizes = (log2(total_block) - log2(min_block));
 	total_size = sizeof(map);
 	total_size = total_size + (sizeof(block_list) * num_sizes);
-        total_size = total_size + (sizeof(block) * FREE_ARRAY((num_sizes + 1), -1));
+        total_size = total_size + (sizeof(block) * FREE_ARRAY(num_sizes,0));
+	total_size = total_size + (sizeof(rl_node) * (total_block / min_block));
 	return (size_t) total_size;
 }
 
@@ -131,21 +136,25 @@ size_t get_requested_order(size_t bytes){
 	return ((size_t) (ceil(log2((double) bytes))));
 }
 
-void split(size_t index) {
+void add_alloc(block *just_alloced) {
+	if (
+}
+
+void split(size_t order) {
 	int i = 1;
 	int ret;
 	do {
-		ret = find_free(curr_list[index - i].location_array);
+		ret = find_free(order - i);
 		i++;
 	} while (ret == -1);
 	block *curr_block;
 	uint32_t temp_loc = curr_block->location;
 	do {
-		curr_block = &(curr_list[index - i].location_array[ret]);
+		curr_block = &(curr_list[order - i].location_array[ret]);
 		curr_block-> = taken;
 		i--;
 		ret = ret * 2;
-		curr_block = &(curr_list[index - i].location_array[ret]);
+		curr_block = &(curr_list[order - i].location_array[ret]);
 		curr_block->free = TAKEN;
 		curr_block->location = temp_loc;
 		curr_block->buddy = &(curr_block[1]);
@@ -154,5 +163,6 @@ void split(size_t index) {
 		curr_block->location = temp_loc	+ curr_list[index - i].size;
 	       	curr_block->buddy = &(curr_block[-1]);
 	} while (i > 1);
-
+	add_alloc(curr_block);
+	return temp_loc;
 }	

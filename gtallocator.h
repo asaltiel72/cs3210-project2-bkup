@@ -20,7 +20,7 @@
 //free values
 #define FREE 1
 #define TAKEN 0
-
+//indexed at 0
 #define FREE_ARRAY(i, j) (((-2 + pow(2, (i+1)))/2) + j)
 
 /*
@@ -52,7 +52,8 @@ typedef struct _rl_node {
 typedef struct _map {
 	block_list *head;
 	block *free_list;
-	rl_node *alloc_table;
+	rl_node *alloc_head;
+	rl_node *alloc_tail;
 	struct _map *next_map;
 } map;
 
@@ -63,6 +64,7 @@ void *prg_mem;
 map *first_map;
 block_list *curr_list;
 int num_sizes;
+int prg_mem_size;
 
 
 void * gtalloc(size_t bytes);
