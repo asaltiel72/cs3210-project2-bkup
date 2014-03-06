@@ -3,6 +3,7 @@
 size_t calc_prg_mem_size(int min_block, int total_block);
 size_t get_requested_order(size_t bytes);
 int find_free(size_t order);
+void split(size_t index);
 
 /*
 	TODO: 
@@ -14,8 +15,8 @@ int find_free(size_t order);
 
 __attribute__ ((constructor)) void init() {
 	
-	user_mem = mmap(NULL, INITIAL_BLOCK, PROT_READ | PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS,-1,0);
-	if(user_mem == MAP_FAILED){
+	usr_mem = mmap(NULL, INITIAL_BLOCK, PROT_READ | PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS,-1,0);
+	if(usr_mem == MAP_FAILED){
 		//print error and errno, then die?
 	}
 	size_t prg_space;
@@ -87,7 +88,7 @@ void * gtalloc(size_t bytes){
     	return split(order);
     } else {
     	// bookkeeping
-		return curr_list[order].location_array[index].location;
+		return ((void *) curr_list[order].location_array[index].location);
     }
     
     return NULL;
@@ -135,6 +136,7 @@ void split(size_t index) {
 	int i = 1;
 	int ret;
 	do {
+		// what are you doing? find_free needs a size_t of the order
 		ret = find_free(curr_list[index - i].location_array);
 		i++;
 	} while (ret == -1);
@@ -142,7 +144,6 @@ void split(size_t index) {
 	uint32_t temp_loc = curr_block->location;
 	do {
 		curr_block = &(curr_list[index - i].location_array[ret]);
-		curr_block-> = taken;
 		i--;
 		ret = ret * 2;
 		curr_block = &(curr_list[index - i].location_array[ret]);
