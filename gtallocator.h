@@ -40,9 +40,18 @@ typedef struct {
 	int array_size;	
 } block_list;
 
+//Reverse lookup node
+typedef struct _rl_node {
+	uint32_t location;
+	block *alloced_block;
+	struct _rl_node *next;
+} rl_node;
+
+
 typedef struct _map {
 	block_list *head;
 	block *free_list;
+	rl_node *alloc_table;
 	struct _map *next_map;
 } map;
 
