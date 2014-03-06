@@ -58,6 +58,9 @@ void init() __attribute__ ((constructor)) {
 	curr_list->size = block_size;
 	curr_list->location_array = curr_block;
 	curr_list->array_size = offset;
+	curr_list->location_array->location = (uint32_t) usr_mem;
+	curr_list->location_array->free = FREE;
+	curr_list->location_array->buddy = NULL;
 	
 	//initialize the rest
 	for(int i = 1; i < num_sizes; i++) {
@@ -113,4 +116,28 @@ size_t get_requested_order(size_t bytes){
 	return ((size_t) (ceil(log2((double) t))));
 }
 
-void split();
+void split(size_t index) {
+	int i = 1;
+	int ret;
+	do {
+		ret = find_free(curr_list[index - i].location_array);
+		i++;
+	} while (ret == -1);
+	block *curr_block;
+	uint32_t temp_loc = curr_block->location;
+	do {
+		curr_block = &(curr_list[index - i].location_array[ret]);
+		curr_block-> = taken;
+		i--;
+		ret = ret * 2;
+		curr_block = &(curr_list[index - i].location_array[ret]);
+		curr_block->free = TAKEN;
+		curr_block->location = temp_loc;
+		curr_block->buddy = &(curr_block[1]);
+		curr_block = &(curr_block[1]);
+		curr_block->free = FREE;
+		curr_block->location = temp_loc	+ curr_list[index - i].size;
+	       	curr_block->buddy = &(curr_block[-1]);
+	} while (i > 1);
+
+}	

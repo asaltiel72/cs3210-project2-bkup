@@ -45,7 +45,7 @@ typedef struct _map {
 
 
 // global variable to store allocated memory
-void *user_mem;
+void *usr_mem;
 void *prg_mem;
 map *first_map;
 block_list *curr_list;
