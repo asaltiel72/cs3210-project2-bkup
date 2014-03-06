@@ -141,7 +141,7 @@ void add_alloc(block *just_alloced) {
 	if (
 }
 
-void split(size_t order) {
+void * split(size_t order) {
 	int i = 1;
 	int ret;
 	do {
