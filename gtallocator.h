@@ -46,16 +46,22 @@ typedef struct _rl_node {
 	void *location;
 	block *alloced_block;
 	struct _rl_node *next;
+	struct _rl_node *prev;
 } rl_node;
 
+//Reverse lookup list
+//last node can be found by
+//location == NULL
+typedef struct _rl_lists {
+	rl_node *alloc_head;
+	rl_node *alloc_tail;
+	rl_node *first_open_node;
+} rl_lists;
 
 typedef struct _map {
 	block_list *head;
 	block *free_list;
-	rl_node *alloc_head;
-	rl_node *alloc_tail;
-	void *first_node_addr;
-	void *last_node_addr;
+	rl_lists *alloced_list;
 	struct _map *next_map;
 } map;
 

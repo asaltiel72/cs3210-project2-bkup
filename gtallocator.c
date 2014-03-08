@@ -4,7 +4,7 @@ size_t calc_prg_mem_size(int min_block, int total_block);
 size_t get_requested_order(size_t bytes);
 int find_free(size_t order);
 void add_alloc(block * just_allocated);
-block * remove_alloc(rl_node *node);
+void remove_alloc(rl_node *node);
 void * split(size_t order);
 void merge(block * free_node);
 
@@ -40,15 +40,19 @@ __attribute__ ((constructor)) void init() {
 	num_sizes = ((log2(INITIAL_BLOCK) - log2(MINIMUM_BLOCK))+1);
 	first_map = (map *) prg_mem;
 	first_map->head = prg_mem + sizeof(map);
-	first_map->free_list = prg_mem + sizeof(map) +
+	first_map->free_list = prg_mem + sizeof(map) +				
 					(sizeof(block_list) * num_sizes);
-	first_map->alloc_head = prg_mem + sizeof(map) + 
-					 (sizeof(block_list) * num_sizes) +
-					 (sizeof(block) * FREE_ARRAY(num_sizes,0));
-	first_map->alloc_tail = first_map->alloc_head;
-	first_map->last_node_addr = (void *) prg_space - sizeof(block);
+	first_map->alloced_list = prg_mem + sizeof(map) + 
+					   (sizeof(block_list) * num_sizes) +
+					   (sizeof(block) * FREE_ARRAY(num_sizes,0));
+	first_map->alloced_list->alloc_head = prg_mem + sizeof(map) + 
+					    sizeof(rl_lists) +
+					   (sizeof(block_list) * num_sizes) +
+					   (sizeof(block) * FREE_ARRAY(num_sizes,0));	
+	first_map->alloced_list->alloc_tail = first_map->alloced_list->alloc_head;
+	first_map->alloced_list->first_open_node = first_map->alloced_list->alloc_head;
 
-	uint32_t block_size = INITIAL_BLOCK;
+	size_t block_size = INITIAL_BLOCK;
 	curr_list = first_map->head;
 	block *curr_block = first_map->free_list;
 	int offset = 1;
@@ -131,6 +135,7 @@ size_t calc_prg_mem_size(int min_block, int total_block) {
 	int total_size;	
 	int num_sizes = (log2(total_block) - log2(min_block));
 	total_size = sizeof(map);
+	total_size = total_size + sizeof(rl_node);
 	total_size = total_size + (sizeof(block_list) * num_sizes);
         total_size = total_size + (sizeof(block) * FREE_ARRAY(num_sizes,0));
 	total_size = total_size + (sizeof(rl_node) * (total_block / min_block));
@@ -141,21 +146,38 @@ size_t get_requested_order(size_t bytes){
 	return ((size_t) (ceil(log2((double) bytes))));
 }
 
+//add adds a block to alloced list
 void add_alloc(block *just_alloced) {
-	rl_node *tail = first_map->alloc_tail;
-	tail->alloced_block = just_alloced;
-	tail->location = just_alloced->location;
-
-	if (first_map->alloc_tail == first_map->last_node_addr) {	
-		tail->next = (rl_node *) first_map->first_node_addr;
+	rl_lists *list = first_map->alloced_list;
+	rl_node *node = list->first_open_node;
+	node->alloced_block = just_alloced;
+	node->location = just_alloced->location;
+	if (list->first_open_node == list->alloc_tail) {
+		node->next = node + sizeof(rl_node);
+		list->alloc_tail = list->alloc_tail->next;
+		list->first_open_node = list->alloc_tail;	
 	} else {
-		tail->next = tail + sizeof(rl_node);
+		node->next = list->first_open_node;
+		list->first_open_node = list->first_open_node->next;
 	}
-	first_map->alloc_tail = first_map->alloc_tail->next;
+	node->next->prev = node;
 }
 
-block * remove_alloc(rl_node *node) {
-	return NULL;
+
+//remove will remove from alloced_list
+void remove_alloc(rl_node *node) {
+	rl_lists *list = first_map->alloced_list;
+	node->location=NULL;
+	if (node == list->alloc_head) {
+		list->alloc_head = node->next;
+		node->next->prev = NULL;
+	} else if (node->next == list->alloc_tail) {
+		list->alloc_tail = node;
+	}
+	node->next = list->first_open_node;
+	list->first_open_node->prev = node;
+	list->first_open_node = node;
+	node->prev = NULL;
 }
 
 
