@@ -1,6 +1,6 @@
 #ifndef _GTALLOCATOR_H_
 #define _GTALLOCATOR_H_
-#endif
+
 
 #include <stdio.h>
 #include <string.h>
@@ -75,8 +75,10 @@ map *first_map;
 block_list *curr_list;
 int num_sizes;
 
+void gt_init();
 
 void * gtalloc(size_t bytes);
 
 void gtfree(void * addr);
 
+#endif

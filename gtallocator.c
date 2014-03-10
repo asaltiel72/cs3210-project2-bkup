@@ -1,5 +1,6 @@
 #include "gtallocator.h"
 
+
 size_t calc_prg_mem_size(int min_block, int total_block);
 size_t get_requested_order(size_t bytes);
 int find_free(size_t order);
@@ -15,8 +16,7 @@ void merge(block * free_node);
 		- Initialize user_mem to mmapped block of INITIAL_BLOCK
 		- Create functions to resize program and user space
 */
-
-__attribute__ ((constructor)) void init() {
+void gt_init() {
 	
 	usr_mem = mmap(NULL, INITIAL_BLOCK, PROT_READ | PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS,-1,0);
 	if(usr_mem == MAP_FAILED){
@@ -93,11 +93,14 @@ void * gtalloc(size_t bytes){
     if (bytes == 0) {
 		return NULL;
     }
+    printf("checking order\n");
     size_t order = get_requested_order(bytes);
+    printf("looking for free block big enough\n");
     int index = find_free(order);
     
     if(index == -1){
-    	return split(order);
+	    	printf("couldn't find one. making one\n");
+    		return split(order);
     } else {
     		add_alloc(&curr_list[order].location_array[index]);
 		return ((void *) curr_list[order].location_array[index].location);
