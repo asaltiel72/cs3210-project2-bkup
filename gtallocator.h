@@ -19,9 +19,11 @@
 
 //free values
 #define FREE 1
-#define TAKEN 0
+#define UNAVAILABLE 0
 //indexed at 0
 #define FREE_ARRAY(i, j) (uint32_t) (((-2 + pow(2, (i+1)))/2) + j)
+//offset from map-> free_list
+#define ORDER(offset) (size_t) log2((2 * offset) + 2) -1
 
 /*
 	TODO: Outline what thread locks are needed

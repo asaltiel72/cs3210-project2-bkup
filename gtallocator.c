@@ -115,6 +115,14 @@ void gtfree(void *addr){
 			- Check buddy partitions
 			- Merge if buddy is currently free
 	*/
+	rl_node *curr_node = first_map->alloced_list->alloc_head;
+	while(curr_node->location != addr && curr_node->location != NULL) {
+		 curr_node = curr_node->next;
+	}
+	block *block = curr_node->alloced_block;
+	block->free = FREE;
+	merge(block);
+	remove_alloc(curr_node);
 }
 
 int find_free(size_t order){
@@ -183,19 +191,19 @@ void remove_alloc(rl_node *node) {
 
 void * split(size_t order) {
 	int i = 0;
-	int ret;
+	int offset;
 	do {
 		i++;
-		ret = find_free(order - i);
-	} while (ret == -1);
-	block *curr_block = &(curr_list[order - i].location_array[ret]);
+		offset = find_free(order - i);
+	} while (offset == -1);
+	block *curr_block = &(curr_list[order - i].location_array[offset]);
 	void *temp_loc = curr_block->location;
-	curr_block->free = TAKEN;
+	curr_block->free = UNAVAILABLE;
 	do {
 		i--;
-		ret = ret * 2;
-		curr_block = &(curr_list[order - i].location_array[ret]);
-		curr_block->free = TAKEN;
+		offset = offset * 2;
+		curr_block = &(curr_list[order - i].location_array[offset]);
+		curr_block->free = UNAVAILABLE;
 		curr_block->location = temp_loc;
 		curr_block->buddy = &(curr_block[1]);
 		curr_block = &(curr_block[1]);
@@ -207,6 +215,15 @@ void * split(size_t order) {
 	return temp_loc;
 }
 
-void merge(block * free_node) {
-
+void merge(block *curr_node) {
+	int order = ORDER((int) (curr_node - first_map->free_list));
+	int offset = (int) (curr_node - first_map->head[order].location_array);
+	while (order > 0 && curr_node->buddy->free == FREE) {
+		curr_node->free = UNAVAILABLE;
+		curr_node->buddy->free = UNAVAILABLE;
+		order--;
+		offset = offset / 2;
+		curr_node = &(curr_list[order].location_array[offset]);
+	       	curr_node->free = FREE;	
+	}
 }
