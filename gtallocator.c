@@ -21,6 +21,8 @@ void gt_init() {
 	usr_mem = mmap(NULL, INITIAL_BLOCK, PROT_READ | PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS,-1,0);
 	if(usr_mem == MAP_FAILED){
 		//print error and errno, then die?
+		printf("ERROR: User Space mmap failed\n");
+		exit(0);
 	}
 	size_t prg_space;
 	prg_space = calc_prg_mem_size(MINIMUM_BLOCK, INITIAL_BLOCK);
@@ -35,6 +37,8 @@ void gt_init() {
 	prg_mem = mmap(NULL, prg_space, PROT_READ | PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS,-1,0);
 	if(prg_mem == MAP_FAILED){
 		//print error and errno, then die
+		printf("ERROR: Program Space mmap failed\n");
+		exit(0);
 	}
 	
 	num_sizes = ((log2(INITIAL_BLOCK) - log2(MINIMUM_BLOCK))+1);
@@ -58,19 +62,18 @@ void gt_init() {
 	int offset = 1;
 
 	//initalize first block
-	curr_list->size = block_size;
-	curr_list->location_array = curr_block;
-	curr_list->array_size = offset;
-	curr_list->location_array->location = usr_mem;
-	curr_list->location_array->free = FREE;
-	curr_list->location_array->buddy = NULL;
+	curr_list[0].size = block_size;
+	curr_list[0].location_array = curr_block;
+	curr_list[0].array_size = offset;
+	curr_list[0].location_array->location = usr_mem;
+	curr_list[0].location_array->free = FREE;
+	curr_list[0].location_array->buddy = NULL;
 	
 	//initialize the rest
 	int i = 0;
 	for(i = 1; i < num_sizes; i++) {
 		block_size = block_size/2;
 		curr_list[i].size = block_size;
-		curr_list[i].num_elements = 0;
 		curr_list[i].location_array = curr_list[i-1].location_array + offset;
 		offset = offset * 2;
 		curr_list[i].array_size = offset;
@@ -93,14 +96,14 @@ void * gtalloc(size_t bytes){
     if (bytes == 0) {
 		return NULL;
     }
-    printf("checking order\n");
     size_t order = get_requested_order(bytes);
     printf("looking for free block big enough\n");
     int index = find_free(order);
     
     if(index == -1){
 	    	printf("couldn't find one. making one\n");
-    		return split(order);
+	    	void *ret = split(order);
+    		return ret;
     } else {
     		add_alloc(&curr_list[order].location_array[index]);
 		return ((void *) curr_list[order].location_array[index].location);
@@ -118,26 +121,29 @@ void gtfree(void *addr){
 			- Check buddy partitions
 			- Merge if buddy is currently free
 	*/
+	printf("Starting gtfree(%p)\n", addr);
 	rl_node *curr_node = first_map->alloced_list->alloc_head;
 	while(curr_node->location != addr && curr_node->location != NULL) {
 		 curr_node = curr_node->next;
 	}
+	fflush(stdout);
 	block *block = curr_node->alloced_block;
 	block->free = FREE;
+	printf("Block freed, starting merge\n");
 	merge(block);
+	printf("merge done, starting remove_alloc\n");
 	remove_alloc(curr_node);
 }
 
 int find_free(size_t order){
 	int i = 0;
-	if(curr_list[order].num_elements > 0){
+	if(curr_list[order].array_size > 0){
 		block *curr = curr_list[order].location_array;
 		for(i = 0; i < curr_list[order].array_size; i++){
-			if(curr[i].free){
+			if(curr[i].free == FREE){
 				return i;
 			}
 		}
-		return -1;
 	}
 	return -1;
 }
@@ -195,10 +201,16 @@ void remove_alloc(rl_node *node) {
 void * split(size_t order) {
 	int i = 0;
 	int offset;
+	printf("Starting split(%u) -- ", order);
+	fflush(stdout);
 	do {
 		i++;
 		offset = find_free(order - i);
+		printf("find_free(%i) => %i\n", order - i, offset);
+		fflush(stdout);
 	} while (offset == -1);
+	printf("Got offset = %i -- ", offset);
+	fflush(stdout);
 	block *curr_block = &(curr_list[order - i].location_array[offset]);
 	void *temp_loc = curr_block->location;
 	curr_block->free = UNAVAILABLE;

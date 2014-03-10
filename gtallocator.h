@@ -4,11 +4,11 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 #include <pthread.h>
 #include <math.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <math.h>
 #include <stdint.h>
 #include <sys/mman.h>
 
@@ -40,7 +40,6 @@ typedef struct {
 	size_t size;
 	block *location_array;
 	int array_size;
-	int num_elements;
 } block_list;
 
 //Reverse lookup node

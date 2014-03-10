@@ -49,14 +49,14 @@ int main(int argc, char *argv[]) {
 		printf("gtalloc\n");
 		//Display start time
 		gt_init();
-		printf("initializtion finished");
+		printf("initializtion finished\n");
 		time(&timer);
 		tm_info = localtime(&timer);
 		printf("Start time: %s\n", asctime(tm_info));
 		
 		//Start allocations
 		for (index = 0; index < num_of_allocs; index++) {
-			printf("alloc: %d", index);
+			printf("alloc: %d\n", index);
 			alloc_addrs[index] = gtalloc(alloc_size);
 		}
 		
