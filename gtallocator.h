@@ -23,7 +23,7 @@
 //indexed at 0
 #define FREE_ARRAY(i, j) (uint32_t) (((-2 + pow(2, (i+1)))/2) + j)
 //offset from map-> free_list
-#define ORDER(offset) (size_t) log2((2 * offset) + 2) -1
+#define ORDER(offset) (size_t) log2(1 + offset)
 
 /*
 	TODO: Outline what thread locks are needed
@@ -46,6 +46,8 @@ typedef struct {
 typedef struct _rl_node {
 	void *location;
 	block *alloced_block;
+	size_t order;
+	int offset;
 	struct _rl_node *next;
 	struct _rl_node *prev;
 } rl_node;

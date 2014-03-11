@@ -58,6 +58,7 @@ int main(int argc, char *argv[]) {
 		for (index = 0; index < num_of_allocs; index++) {
 			printf("alloc: %d\n", index);
 			alloc_addrs[index] = gtalloc(alloc_size);
+			printf("alloc addr = %p\n", alloc_addrs[index]);
 		}
 		
 		//Display time allocations finish
