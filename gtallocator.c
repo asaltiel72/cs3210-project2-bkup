@@ -25,7 +25,7 @@ void gt_init() {
 		//printf("ERROR: User Space mmap failed\n");
 		exit(0);
 	}
-	printf("user mems = %p", usr_mem);
+	printf("user mems = %p\n", usr_mem);
 	size_t prg_space;
 	prg_space = calc_prg_mem_size(MINIMUM_BLOCK, INITIAL_BLOCK);
 	
@@ -48,25 +48,35 @@ void gt_init() {
 	num_sizes = ((log2(INITIAL_BLOCK) - log2(MINIMUM_BLOCK))+1);
 	//printf("num of sizes = %i\n", num_sizes);
 	first_map = (map *) prg_mem;
+	printf("map size is %x\n", (uint32_t) sizeof(map));
+	printf("block_list size is %x\n", (uint32_t) sizeof(block_list));
 	printf("first_map = %p\n", first_map);
 	first_map->head = prg_mem + sizeof(map);
-	//printf("first_map->head = %p\n", first_map->head);
+	printf("old head = %p\n", first_map->head);
+	first_map->head = (block_list *) &(first_map[1]);
+	printf("first_map->head = %p\n", first_map->head);
+	printf("head offset %x\n", (uint32_t)((void *)first_map->head - (void *)first_map));
 	first_map->free_list = prg_mem + sizeof(map) +				
 					(sizeof(block_list) * num_sizes);
 	printf("first_map->free_list = %p\n", first_map->free_list);
+	printf("free_list offset %x\n", (uint32_t)((void *)first_map->free_list - (void *)first_map));
 	first_map->alloced_list = prg_mem + sizeof(map) + 
 					   (sizeof(block_list) * num_sizes) +
 					   (sizeof(block) * FREE_ARRAY(num_sizes,0));
-    	//printf("first_map->alloced_list = %p\n", first_map->alloced_list);
+    	printf("first_map->alloced_list = %p\n", first_map->alloced_list);
+	printf("alloced_list offset %x\n", (uint32_t)((void *)first_map->alloced_list - (void *)first_map));
 	first_map->alloced_list->alloc_head = prg_mem + sizeof(map) + 
 					    sizeof(rl_lists) +
 					   (sizeof(block_list) * num_sizes) +
 					   (sizeof(block) * FREE_ARRAY(num_sizes,0));	
-	//printf("first_map->alloced_list->alloc_head = %p\n", first_map->alloced_list->alloc_head);
+	printf("first_map->alloced_list->alloc_head = %p\n", first_map->alloced_list->alloc_head);
+	printf("alloc_head offset %x\n", (uint32_t)((void *)first_map->alloced_list->alloc_head - (void *)first_map));
 	first_map->alloced_list->alloc_tail = first_map->alloced_list->alloc_head;
 	//printf("first_map->alloced_list->alloc_tail = %p\n", first_map->alloced_list->alloc_tail);
 	first_map->alloced_list->first_open_node = first_map->alloced_list->alloc_head;
 	//printf("first_map->alloced_list->afirst_open_node = %p\n", first_map->alloced_list->first_open_node);
+	printf("prg_space = %x\n", (uint32_t) prg_space);
+
 
 	size_t block_size = INITIAL_BLOCK;
 	curr_list = first_map->head;
@@ -74,15 +84,18 @@ void gt_init() {
 	int offset = 1;
 
 	//initalize first block
-	curr_list[0].size = block_size;
-	curr_list[0].location_array = curr_block;
-	curr_list[0].array_size = offset;
-	curr_list[0].location_array->location = usr_mem;
-	curr_list[0].location_array->free = FREE;
-	curr_list[0].location_array->buddy = NULL;
+	curr_list->size = block_size;
+	curr_list->location_array = curr_block;
+	curr_list->array_size = offset;
+	curr_list->location_array->location = usr_mem;
+	curr_list->location_array->free = FREE;
+	curr_list->location_array->buddy = NULL;
 	
 	printf("Size of block = %x\n", (uint32_t) sizeof(block));
-	
+	printf("Size of rl_list = %x\n", (uint32_t) sizeof(rl_lists));
+	printf("Size of rl_node = %x\n", (uint32_t) sizeof(rl_node));
+
+
 	//initialize the rest
 	int i = 0;
 	void *location = curr_list->location_array;
@@ -189,10 +202,15 @@ size_t calc_prg_mem_size(int min_block, int total_block) {
 	int total_size;	
 	int num_sizes = (log2(total_block) - log2(min_block));
 	total_size = sizeof(map);
+	printf("map %x\n", total_size);
+	total_size = total_size + (sizeof(block_list) * (num_sizes + 1));
+	printf("map %x\n", total_size);
+    	total_size = total_size + (sizeof(block) * FREE_ARRAY((num_sizes + 1),0));
+	printf("map %x\n", total_size);
 	total_size = total_size + sizeof(rl_lists);
-	total_size = total_size + (sizeof(block_list) * num_sizes);
-    total_size = total_size + (sizeof(block) * FREE_ARRAY(num_sizes,0));
+	printf("map %x\n", total_size);
 	total_size = total_size + (sizeof(rl_node) * (total_block / min_block));
+	printf("map %x\n", total_size);
 	return (size_t) total_size;
 }
 
@@ -210,21 +228,33 @@ size_t get_requested_order(size_t bytes){
 void add_alloc(size_t order, int offset) {
 	rl_lists *list = first_map->alloced_list;
 	rl_node *node = list->first_open_node;
+	int rl_size = (uint32_t) sizeof(rl_node);
+	printf("rl_node size is %x\n", rl_size);
 	node->alloced_block = &(curr_list[order].location_array[offset]);
 	printf("block addr = %p\n", node->alloced_block);
 	node->location = node->alloced_block->location;
 	printf("alloc addr = %p\n", node->location);
 	node->order = order;
+	printf("node order set to %i\n", (int) order);
 	node->offset = offset;
+	printf("node offset set to %i\n", offset);
 	if (list->first_open_node == list->alloc_tail) {
-		node->next = node + sizeof(rl_node);
+		printf("add_alloc's in if\n");
+		printf("nodes address is %p\n", node);
+		node->next = &(node[1]);
+		printf("node now points to %p\n", node->next);
 		list->alloc_tail = node->next;
-		list->first_open_node = list->alloc_tail;	
+		printf("moved the tail pointer to %p\n", list->alloc_tail);
+		list->first_open_node = list->alloc_tail;
+		printf("first open node pointer is now %p\n", list->first_open_node);	
 	} else {
+		printf("add_alloc's in else\n");
 		node->next = list->first_open_node;
 		list->first_open_node = list->first_open_node->next;
 	}
+	printf("made it out of the ifs\n");
 	node->next->prev = node;
+	printf("set new nodes prev to %p\n", node);
 }
 
 
