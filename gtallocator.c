@@ -269,7 +269,7 @@ void * split(size_t order) {
 		curr_block = &(curr_list[order - i].location_array[offset]);
 		curr_block->free = UNAVAILABLE;
 		curr_block->location = temp_loc;
-		curr_block->buddy = (curr_block + sizeof(block));
+		curr_block->buddy = &(curr_list[order - i].location_array[(offset + 1)]);
 		curr_block->buddy->free = FREE;
 		curr_block->buddy->location = temp_loc	+ curr_list[order - i].size;
 	    curr_block->buddy->buddy = curr_block;
