@@ -25,7 +25,7 @@ void gt_init() {
 		//printf("ERROR: User Space mmap failed\n");
 		exit(0);
 	}
-	//printf("user mems = %p", usr_mem);
+	printf("user mems = %p", usr_mem);
 	size_t prg_space;
 	prg_space = calc_prg_mem_size(MINIMUM_BLOCK, INITIAL_BLOCK);
 	
@@ -37,7 +37,7 @@ void gt_init() {
 	//may need to add an array for freeing
 
 	prg_mem = mmap(NULL, prg_space, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS,-1,0);
-	//printf("prg_mem + prg_space = %p\n", prg_mem + prg_space);
+	printf("prg_mem + prg_space = %p\n", prg_mem + prg_space);
 	if(prg_mem == MAP_FAILED){
 		//print error and errno, then die
 		//printf("ERROR: Program Space mmap failed\n");
@@ -48,7 +48,7 @@ void gt_init() {
 	num_sizes = ((log2(INITIAL_BLOCK) - log2(MINIMUM_BLOCK))+1);
 	//printf("num of sizes = %i\n", num_sizes);
 	first_map = (map *) prg_mem;
-	//printf("first_map = %p\n", first_map);
+	printf("first_map = %p\n", first_map);
 	first_map->head = prg_mem + sizeof(map);
 	//printf("first_map->head = %p\n", first_map->head);
 	first_map->free_list = prg_mem + sizeof(map) +				
@@ -57,7 +57,7 @@ void gt_init() {
 	first_map->alloced_list = prg_mem + sizeof(map) + 
 					   (sizeof(block_list) * num_sizes) +
 					   (sizeof(block) * FREE_ARRAY(num_sizes,0));
-    //printf("first_map->alloced_list = %p\n", first_map->alloced_list);
+    	//printf("first_map->alloced_list = %p\n", first_map->alloced_list);
 	first_map->alloced_list->alloc_head = prg_mem + sizeof(map) + 
 					    sizeof(rl_lists) +
 					   (sizeof(block_list) * num_sizes) +
@@ -81,7 +81,7 @@ void gt_init() {
 	curr_list[0].location_array->free = FREE;
 	curr_list[0].location_array->buddy = NULL;
 	
-	//printf("size = %x\n", sizeof(block));
+	printf("Size of block = %x\n", (uint32_t) sizeof(block));
 	
 	//initialize the rest
 	int i = 0;
@@ -143,7 +143,7 @@ void * gtalloc(size_t bytes){
     	curr_list[order].location_array[index].free = UNAVAILABLE;
 		return ((void *) curr_list[order].location_array[index].location);
     }
-    
+    mem_dump(); 
     return NULL;
 }
 
@@ -177,7 +177,7 @@ int find_free(size_t order){
 	block *curr = curr_list[order].location_array;
 	//printf("array size for order %u --> %i\n", order, curr_list[order].array_size);
 	for(i = 0; i < curr_list[order].array_size; i++){
-		printf("i is free? %i\n", curr[i].free);
+		//printf("i is free? %i\n", curr[i].free);
 		if(curr[i].free == FREE){
 			return i;
 		}
@@ -213,6 +213,7 @@ void add_alloc(size_t order, int offset) {
 	node->alloced_block = &(curr_list[order].location_array[offset]);
 	printf("block addr = %p\n", node->alloced_block);
 	node->location = node->alloced_block->location;
+	printf("alloc addr = %p\n", node->location);
 	node->order = order;
 	node->offset = offset;
 	if (list->first_open_node == list->alloc_tail) {
