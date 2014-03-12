@@ -19,6 +19,9 @@ void mem_dump();
 */
 void gt_init() {
 	
+	pthread_mutex_init(&allocmutex,NULL);
+	pthread_mutex_init(&freemutex,NULL);	
+
 	usr_mem = mmap(NULL, INITIAL_BLOCK, PROT_READ | PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS,-1,0);
 	if(usr_mem == MAP_FAILED){
 		//print error and errno, then die?
@@ -48,6 +51,7 @@ void gt_init() {
 	num_sizes = ((log2(INITIAL_BLOCK) - log2(MINIMUM_BLOCK))+1);
 	//printf("num of sizes = %i\n", num_sizes);
 	first_map = (map *) prg_mem;
+	curr_map = first_map;
 	printf("map size is %x\n", (uint32_t) sizeof(map));
 	printf("block_list size is %x\n", (uint32_t) sizeof(block_list));
 	printf("first_map = %p\n", first_map);
@@ -115,7 +119,7 @@ void gt_init() {
 	//mem_dump();
 }
 
-__attribute__ ((destructor)) void destory() {
+__attribute__ ((destructor)) void destroy() {
 	// unmap all the mmapped regions
 }
 
@@ -138,9 +142,20 @@ void * gtalloc(size_t bytes){
 			- Update memory tree
 			- Log user allocation
 			- Return usable pointer to user
-	*/
+	*/ 
+    pthread_mutex_lock(&allocmutex);
     if (bytes == 0) {
 		return NULL;
+    }
+    map *comp_map = first_map;
+    while(bytes > comp_map->head->size){
+	if(comp_map->next_map !=NULL){
+		comp_map = comp_map->next_map;
+	}
+	else{
+		map *newGuy;
+		//mapinit(newGuy)
+	}
     }
     size_t order = get_requested_order(bytes);
     //printf("looking for free block big enough -- order = %u\n", order);
@@ -158,6 +173,7 @@ void * gtalloc(size_t bytes){
     }
     mem_dump(); 
     return NULL;
+    pthread_mutex_unlock(&allocmutex);
 }
 
 void gtfree(void *addr){
@@ -169,6 +185,7 @@ void gtfree(void *addr){
 			- Check buddy partitions
 			- Merge if buddy is currently free
 	*/
+	pthread_mutex_lock(&freemutex);
 	printf("Starting gtfree(%p)\n", addr);
 	rl_node *curr_node = first_map->alloced_list->alloc_head;
 	//printf("assign curr_node\n");
@@ -183,6 +200,7 @@ void gtfree(void *addr){
 	merge(curr_node);
 	printf("merge done, starting remove_alloc\n");
 	remove_alloc(curr_node);
+	pthread_mutex_unlock(&freemutex);
 }
 
 int find_free(size_t order){

@@ -73,8 +73,12 @@ typedef struct _map {
 void *usr_mem;
 void *prg_mem;
 map *first_map;
+map *curr_map;
 block_list *curr_list;
 int num_sizes;
+
+pthread_mutex_t allocmutex;
+pthread_mutex_t freemutex;
 
 void gt_init();
 
